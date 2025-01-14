@@ -1,6 +1,6 @@
 /dataset/corpus/*
 /__pycache__
-*/__pycache__
+/*/__pycache__
 model/model_weights.pth
 .DS_Store
-*/.DS_Store
+/*/.DS_Store

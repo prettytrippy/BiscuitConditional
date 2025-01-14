@@ -5,7 +5,7 @@ import torch.nn as nn
 from classifier import TextClassificationModel
 import matplotlib.pyplot as plt
 
-batch_size = 50
+batch_size = 3
 
 def make_training_set():
     rets = []
@@ -16,7 +16,7 @@ def make_training_set():
         lines = file.read().split("\n")
 
     lines = [line for line in lines if line]
-    np.random.shuffle(lines)
+    # np.random.shuffle(lines)
     
     for line in lines:
         if count == batch_size:
@@ -34,9 +34,9 @@ def make_training_set():
     rets.append(chunk)
     return rets
 
-def train_model(model, train_loader, epochs):
+def train_model(model, train_loader, epochs, learning_rate=0.00001):
     loss_fn = nn.BCELoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
     for epoch in range(epochs):
         model.train()
@@ -57,12 +57,14 @@ def train_model(model, train_loader, epochs):
 
 if __name__ == "__main__":
     model = TextClassificationModel()
-    model.load_state_dict(torch.load("model_weights.pth"))
+    model.load_state_dict(torch.load("model_weights.pth", weights_only=True))
 
     dataset = make_training_set()
     trainloader = dataset[:-1]
     testloader = dataset[-1]
-    train_model(model, trainloader, epochs=len(trainloader))
+    train_model(model, trainloader, epochs=len(trainloader), learning_rate=0.00001)
+
+    torch.save(model.state_dict(), 'model_weights.pth')
 
     # Eval
     trues = []
@@ -77,7 +79,7 @@ if __name__ == "__main__":
             trues.append(label)
             guesses.append(observed)
 
-        torch.save(model.state_dict(), 'model_weights.pth')
+            print(f"Conditional: {txt}. True label: {label}, Guessed label: {observed}\n")
 
         guesses = np.array(guesses)
         guesses /= np.max(guesses)
@@ -85,6 +87,3 @@ if __name__ == "__main__":
         plt.plot(trues)
         plt.plot(guesses)
         plt.show()
-
-        print(model("There's biscuits on the table, if you want some.").item())
-        print(model("If he is a dog, he is a mammal.").item())
